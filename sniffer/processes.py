@@ -38,7 +38,7 @@ def associate(p,rows):
         if (r['local'],r['remote']) in ((a,b),(b,a)):
             return {'pid':r['pid'],'process':r['process'],'confidence':'exact'}
     for r in rows:
-        if r['remote'] is None and any(r['local'][1]==x[1] and r['local'][0] in ('*','0.0.0.0','::',x[0]) for x in (a,b)):
+        if r['remote'] is None and any(r['local'][1]==x[1] and r['local'][0] not in ('*','0.0.0.0','::') and r['local'][0]==x[0] for x in (a,b)):
             return {'pid':r['pid'],'process':r['process'],'confidence':'listener'}
     return None
 

@@ -10,7 +10,8 @@ class PcapError(RuntimeError):
     pass
 
 class Timeval(C.Structure):
-    _fields_=[('tv_sec',C.c_long),('tv_usec',C.c_long)]
+    _fields_=[('tv_sec',C.c_int32 if sys.platform=='win32' else C.c_long),
+              ('tv_usec',C.c_int32 if sys.platform in ('darwin','win32') else C.c_long)]
 class Header(C.Structure):
     _fields_=[('ts',Timeval),('caplen',C.c_uint32),('length',C.c_uint32)]
 class Device(C.Structure):pass

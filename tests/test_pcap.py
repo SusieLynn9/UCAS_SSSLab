@@ -22,3 +22,10 @@ class PcapTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'bad';p.write_bytes(b'not a pcap')
             with self.assertRaises(PcapError):Pcap.offline(p)
+
+    @unittest.skipUnless(__import__('sys').platform=='darwin','Darwin ABI')
+    def test_darwin_timeval_padding_is_not_microseconds(self):
+        import struct
+        from sniffer.pcap import Timeval
+        value=Timeval.from_buffer_copy(struct.pack('<qiI',1,250000,0x12345678))
+        self.assertEqual(value.tv_usec,250000)
