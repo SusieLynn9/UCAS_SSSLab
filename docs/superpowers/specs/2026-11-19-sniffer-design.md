@@ -10,7 +10,7 @@
 - 加分：双向 IP+端口 TCP 流、序列号重组、时序展示；进程产生的 TCP 流关联。
 - 报文列表、协议树、十六进制三窗格；暂停/停止；离线 PCAP 导入导出；统计和丢包指标。
 - 提交时间 2026-11-24 23:55，ZIP，源码目录+MP4+PDF/DOCX，报告含 Git 链接，保留完整 Git 历史；README 不是提交要求。
-- 1B 不实现。英文名 Security File Transfer Software Design and Implementation。
+- 1B 不实现。英文名 Secure File Transfer Software Design and Implementation。
 
 ## 实现选择（开发者决定）
 

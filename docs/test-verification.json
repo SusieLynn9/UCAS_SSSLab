@@ -1,0 +1,8 @@
+{
+  "command": "/usr/bin/python3 -m unittest discover -v",
+  "python": "3.9.6",
+  "tests": 40,
+  "passed": true,
+  "environment": "macOS / Apple Silicon",
+  "note": "Local HTTP tests run outside Codex network sandbox, as ordinary user."
+}

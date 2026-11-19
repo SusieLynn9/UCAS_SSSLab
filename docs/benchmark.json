@@ -1,0 +1,17 @@
+{
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "python": "3.15.0",
+  "packets": 10000,
+  "decode_runs_seconds": [
+    0.06859375000203727,
+    0.06808108300174354,
+    0.06810650000261376
+  ],
+  "decode_packets_per_second": 146829,
+  "session_seconds_with_tracemalloc": 1.0668164170056116,
+  "session_packets_per_second_with_tracemalloc": 9374,
+  "retained": 5000,
+  "evicted": 5000,
+  "traced_peak_bytes": 16294188,
+  "scope": "Synthetic offline CPU benchmark; excludes live libpcap/helper IPC, GUI, NIC throughput and OS drop rate"
+}

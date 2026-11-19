@@ -1,0 +1,11 @@
+{
+  "provenance": "User executed ./verify_live.command in the local macOS terminal and supplied this output in conversation. No PCAP retained.",
+  "passed": true,
+  "interface": "lo0",
+  "bpf": "tcp port 50860",
+  "packets": 12,
+  "http_requests": 1,
+  "http_responses": 1,
+  "stats": {"received": 119, "dropped": 0, "interface_dropped": 0},
+  "timestamp": "2026-11-19 21:20:52 +0800"
+}
