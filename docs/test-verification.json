@@ -4,5 +4,10 @@
   "tests": 40,
   "passed": true,
   "environment": "macOS / Apple Silicon",
-  "note": "Local HTTP tests run outside Codex network sandbox, as ordinary user."
+  "note": "Local HTTP tests run outside Codex network sandbox, as ordinary user.",
+  "gui_launch": {
+    "verified": true,
+    "provenance": "用户确认运行 launch.command 后界面已打开，暂时无错误。",
+    "scope": "启动确认；完整交互与录屏尚待验收"
+  }
 }

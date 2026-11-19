@@ -67,12 +67,12 @@ def build(name,student_id,repo_url,output):
     p('Network Packet Sniffer Design and Implementation','small');p('以真实捕获为基础，以协议证据和连接语义为核心。')
     story.append(Spacer(1,10));story.append(table([['项目信息','内容'],['姓名 / 学号',(name or '待补姓名')+' / '+(student_id or '待补真实学号')],['源码仓库',repo_url or '待创建：software_and_system_security_lab；提交前必须替换为真实 HTTPS URL'],['实验分支','lab-1a-sniffer-design-and-implementation'],['环境','macOS / Apple Silicon；系统 Python 3.9+ / libpcap；本地浏览器 GUI'],['文档状态','待补身份、仓库与 GUI 人工验收的草稿' if draft else '身份信息已填写；请复核仓库开源状态、GUI 验收和最终演示视频']],[105,394]))
     story.append(Spacer(1,17));h('工作摘要');p('实现网卡选择、真实 libpcap 抓包、BPF 捕获过滤、自主分层解码、逻辑显示过滤、三窗格分析、PCAP 导入导出，以及双向 TCP 流重组、时序图和本机进程快照关联。TLS 仅识别可见握手，不解密 HTTPS。')
-    p(f'验证摘要：{tests["tests"]} 项自动化测试通过；用户本机回环实测 12 个报文、1 个 HTTP 请求、1 个 HTTP 响应，0 丢包。浏览器自动化通道不可用，完整 GUI 人工验收与录屏仍需补齐。','small')
+    p(f'验证摘要：{tests["tests"]} 项自动化测试通过；用户本机回环实测 12 个报文、1 个 HTTP 请求、1 个 HTTP 响应，0 丢包。用户已确认 GUI 打开且暂时无错误；完整交互验收与录屏仍需补齐。','small')
     h('实现边界');p('该实现以课程实验可解释性和可复现性为目标。性能测量为合成离线 CPU 基准，不能推导真实网卡线速。尚未实现 IP 分片重组、完整 HTTP/2/QUIC、HTTPS 解密或逐包进程来源追踪。')
 
     page('01 / REQUIREMENTS & NETWORK LAYERS','要求映射与抓包层次')
     p('依据课程《实验 1 讲解 2026.pdf》第 2–3、5、9、14–15 页，A/B 二选一；本项目仅完成 1A。评分采用相对排名，以下是能力与证据映射，不预设分数。')
-    story.append(table([['课程要求','实现与证据'],['NPS 必须实现（第 9 页）','ctypes 调用系统 libpcap；用户终端 verify_live.command 实测真实 lo0 请求/响应。'],['带 GUI（第 5、15 页）','本地浏览器三窗格：列表、协议树、HEX/ASCII；流、进程、统计页。源代码已实现；人工 GUI 验收待补。'],['协议过滤（第 14 页）','BPF 捕获过滤；HTTP/TCP/UDP/IPv4/v6/ICMP 等显示过滤，and/or/not/括号。'],['尽量完善 NPA（第 9 页）','自主解析 Ethernet/VLAN/ARP/IP/TCP/UDP/ICMP；HTTP/1、DNS、TLS ClientHello/SNI 特征识别。'],['TCP / 进程流追踪（加分）','双向四元组、TCP 重组与时序、lsof 快照关联；缺口、冲突和置信度可见。'],['完整开源记录与提交（第 2–3 页）','本地阶段性 Git 历史；远端和录屏待补；打包脚本生成规定的 ZIP 结构。']],[137,362]))
+    story.append(table([['课程要求','实现与证据'],['NPS 必须实现（第 9 页）','ctypes 调用系统 libpcap；用户终端 verify_live.command 实测真实 lo0 请求/响应。'],['带 GUI（第 5、15 页）','本地浏览器三窗格：列表、协议树、HEX/ASCII；流、进程、统计页。用户已确认启动成功；完整交互验收待补。'],['协议过滤（第 14 页）','BPF 捕获过滤；HTTP/TCP/UDP/IPv4/v6/ICMP 等显示过滤，and/or/not/括号。'],['尽量完善 NPA（第 9 页）','自主解析 Ethernet/VLAN/ARP/IP/TCP/UDP/ICMP；HTTP/1、DNS、TLS ClientHello/SNI 特征识别。'],['TCP / 进程流追踪（加分）','双向四元组、TCP 重组与时序、lsof 快照关联；缺口、冲突和置信度可见。'],['完整开源记录与提交（第 2–3 页）','本地阶段性 Git 历史；远端和录屏待补；打包脚本生成规定的 ZIP 结构。']],[137,362]))
     h('OSI：捕获层次不等于分析层次')
     p('macOS BPF/libpcap 从网络接口取得链路层可见报文（lo0 使用 Loopback 头，Ethernet 接口通常是以太帧）。分析器剥离链路头后识别网络层 IPv4/v6，再依据协议字段解析 TCP/UDP/ICMP，最后检查载荷是否符合应用层结构。抓到低层字节，并不意味着一定能恢复应用内容。')
     h('Thor 思考题')
@@ -118,7 +118,7 @@ def build(name,student_id,repo_url,output):
     p('HTTP 只绑定 127.0.0.1，控制 API 校验随机令牌、Host、Origin 和 Sec-Fetch-Site；不开放 CORS。报文中的文本通过 textContent 安全渲染，不作为 HTML 执行；使用 CSP 限制资源。PCAP 上传最多 64 MiB，非法文件导入以临时会话验证后再替换，失败不清空原会话；控制操作版本阻止旧导入覆盖后来的清空或捕获。导出只包含保留窗口中匹配筛选的真实字节。')
 
     page('06 / VALIDATION & DELIVERY','验证、复现与提交')
-    story.append(table([['验证项','状态与证据'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS 自带 Python 3.9.6 与 Homebrew Python 3.15.0；应用无 pip 依赖。'],['真实 NPS','用户本机终端运行：12 个 lo0 报文；1 个 HTTP 请求、1 个响应，丢包 0。原始 JSON 已保存。'],['GUI / 演示视频','源代码和 API 已验证；自动浏览器通道不可用，完整人工交互验收、截图和实际 MP4 待补。'],['提交状态','本地 Git 分阶段记录已建立；姓名、学号、真实远端与开源状态待补；未发布或提交课程网站。']],[105,394]))
+    story.append(table([['验证项','状态与证据'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS 自带 Python 3.9.6 与 Homebrew Python 3.15.0；应用无 pip 依赖。'],['真实 NPS','用户本机终端运行：12 个 lo0 报文；1 个 HTTP 请求、1 个响应，丢包 0。原始 JSON 已保存。'],['GUI / 演示视频','用户确认界面已打开且暂时无错误；完整交互验收、截图和实际 MP4 待补。'],['提交状态','本地 Git 分阶段记录已建立；姓名、学号、真实远端与开源状态待补；未发布或提交课程网站。']],[105,394]))
     h('运行与复现')
     for line in ['./launch.command','./verify_live.command','/usr/bin/python3 -m unittest discover -v','/usr/bin/python3 -m compileall -q run.py sniffer scripts','/usr/bin/python3 scripts/benchmark.py --packets 10000']:
         p(line,'code')
