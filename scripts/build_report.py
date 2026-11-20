@@ -65,7 +65,7 @@ def build(name,student_id,repo_url,output):
     page('UCAS / SOFTWARE AND SYSTEM SECURITY / LAB 1A','嗅探器设计与实现')
     story.append(Paragraph('Prism<span color="#0b887e">.</span>',ParagraphStyle('brand',fontName='Helvetica-Bold',fontSize=49,leading=62,textColor=INK,spaceAfter=8)))
     p('Network Packet Sniffer Design and Implementation','small');p('以真实捕获为基础，以协议证据和连接语义为核心。')
-    story.append(Spacer(1,10));story.append(table([['项目信息','内容'],['姓名 / 学号',(name or '待补姓名')+' / '+(student_id or '待补真实学号')],['源码仓库',repo_url or '待创建：software_and_system_security_lab；提交前必须替换为真实 HTTPS URL'],['实验分支','lab-1a-sniffer-design-and-implementation'],['环境','macOS / Apple Silicon；系统 Python 3.9+ / libpcap；本地浏览器 GUI'],['文档状态','待补身份、仓库与 GUI 人工验收的草稿' if draft else '身份信息已填写；请复核仓库开源状态、GUI 验收和最终演示视频']],[105,394]))
+    story.append(Spacer(1,10));story.append(table([['项目信息','内容'],['姓名 / 学号',(name or '待补姓名')+' / '+(student_id or '待补真实学号')],['源码仓库',repo_url or '待创建：software_and_system_security_lab；提交前必须替换为真实 HTTPS URL'],['实验分支','lab-1a-sniffer-design-and-implementation'],['环境','macOS / Apple Silicon；系统 Python 3.9+ / libpcap；本地浏览器 GUI'],['文档状态','待补身份与 GUI 人工验收的草稿' if draft else '身份信息已填写；请复核仓库开源状态、GUI 验收和最终演示视频']],[105,394]))
     story.append(Spacer(1,17));h('工作摘要');p('实现网卡选择、真实 libpcap 抓包、BPF 捕获过滤、自主分层解码、逻辑显示过滤、三窗格分析、PCAP 导入导出，以及双向 TCP 流重组、时序图和本机进程快照关联。TLS 仅识别可见握手，不解密 HTTPS。')
     p(f'验证摘要：{tests["tests"]} 项自动化测试通过；用户本机回环实测 12 个报文、1 个 HTTP 请求、1 个 HTTP 响应，0 丢包。用户已确认 GUI 打开且暂时无错误；完整交互验收与录屏仍需补齐。','small')
     h('实现边界');p('该实现以课程实验可解释性和可复现性为目标。性能测量为合成离线 CPU 基准，不能推导真实网卡线速。尚未实现 IP 分片重组、完整 HTTP/2/QUIC、HTTPS 解密或逐包进程来源追踪。')
@@ -118,7 +118,7 @@ def build(name,student_id,repo_url,output):
     p('HTTP 只绑定 127.0.0.1，控制 API 校验随机令牌、Host、Origin 和 Sec-Fetch-Site；不开放 CORS。报文中的文本通过 textContent 安全渲染，不作为 HTML 执行；使用 CSP 限制资源。PCAP 上传最多 64 MiB，非法文件导入以临时会话验证后再替换，失败不清空原会话；控制操作版本阻止旧导入覆盖后来的清空或捕获。导出只包含保留窗口中匹配筛选的真实字节。')
 
     page('06 / VALIDATION & DELIVERY','验证、复现与提交')
-    story.append(table([['验证项','状态与证据'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS 自带 Python 3.9.6 与 Homebrew Python 3.15.0；应用无 pip 依赖。'],['真实 NPS','用户本机终端运行：12 个 lo0 报文；1 个 HTTP 请求、1 个响应，丢包 0。原始 JSON 已保存。'],['GUI / 演示视频','用户确认界面已打开且暂时无错误；完整交互验收、截图和实际 MP4 待补。'],['提交状态','本地 Git 分阶段记录已建立；姓名、学号、真实远端与开源状态待补；未发布或提交课程网站。']],[105,394]))
+    story.append(table([['验证项','状态与证据'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS 自带 Python 3.9.6 与 Homebrew Python 3.15.0；应用无 pip 依赖。'],['真实 NPS','用户本机终端运行：12 个 lo0 报文；1 个 HTTP 请求、1 个响应，丢包 0。原始 JSON 已保存。'],['GUI / 演示视频','用户确认界面已打开且暂时无错误；完整交互验收、截图和实际 MP4 待补。'],['提交状态','本地 Git 分阶段记录已建立；远端已配置为用户提供的 GitHub 地址，推送需认证；姓名、学号与开源状态待补，未提交课程网站。']],[105,394]))
     h('运行与复现')
     for line in ['./launch.command','./verify_live.command','/usr/bin/python3 -m unittest discover -v','/usr/bin/python3 -m compileall -q run.py sniffer scripts','/usr/bin/python3 scripts/benchmark.py --packets 10000']:
         p(line,'code')
@@ -131,10 +131,10 @@ def build(name,student_id,repo_url,output):
     p('课程《实验 1 讲解 2026.pdf》（刘鹏，2026-11-10）；本机 libpcap API/系统头文件；libpcap 官方仓库 https://github.com/the-tcpdump-group/libpcap；TCP RFC 9293、HTTP/1.1 RFC 9112、IPv6 RFC 8200、TLS 1.3 RFC 8446（协议规范参考）。','small')
     out=Path(output);out.parent.mkdir(parents=True,exist_ok=True)
     def decorate(canvas,doc):
-        canvas.saveState();canvas.setStrokeColor(LINE);canvas.line(48,43,547,43);canvas.setFont('Helvetica',8);canvas.setFillColor(MUTED);canvas.drawString(48,29,'PRISM / UCAS LAB 1A');canvas.drawRightString(547,29,f'{doc.page} / 7');canvas.setFont('STSong-Light',8);canvas.drawRightString(547,813,'报告草稿 · 待补身份与仓库' if draft else '实验 1A · 嗅探器设计与实现');canvas.restoreState()
+        canvas.saveState();canvas.setStrokeColor(LINE);canvas.line(48,43,547,43);canvas.setFont('Helvetica',8);canvas.setFillColor(MUTED);canvas.drawString(48,29,'PRISM / UCAS LAB 1A');canvas.drawRightString(547,29,f'{doc.page} / 7');canvas.setFont('STSong-Light',8);canvas.drawRightString(547,813,'报告草稿 · 待补身份' if draft else '实验 1A · 嗅探器设计与实现');canvas.restoreState()
     doc=SimpleDocTemplate(str(out),pagesize=A4,rightMargin=48,leftMargin=48,topMargin=48,bottomMargin=57,title='Prism - 嗅探器设计与实现',author=name or '待填写学生姓名')
     doc.build(story,onFirstPage=decorate,onLaterPages=decorate);return out
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--name',default='');p.add_argument('--student-id',default='');p.add_argument('--repo-url',default='');p.add_argument('--output',default=str(ROOT/'output/pdf/lab-1a-report.pdf'));a=p.parse_args();print(build(a.name,a.student_id,a.repo_url,a.output))
+    p=argparse.ArgumentParser();p.add_argument('--name',default='');p.add_argument('--student-id',default='');p.add_argument('--repo-url',default='https://github.com/SusieLynn9/UCAS_SSSLab');p.add_argument('--output',default=str(ROOT/'output/pdf/lab-1a-report.pdf'));a=p.parse_args();print(build(a.name,a.student_id,a.repo_url,a.output))
 if __name__=='__main__':main()
