@@ -8,3 +8,6 @@ output/
 *.pcap
 *.pcapng
 !samples/*.pcap
+
+# Local documentation
+/docs/
