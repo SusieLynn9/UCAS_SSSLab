@@ -18,6 +18,19 @@ def tcp(data=b'',seq=100,ack=0,flags=0x18,reverse=False,port=8080,sport=51432):
     return frame(ip(struct.pack('!HHIIBBHHH',a,b,seq,ack,0x50,flags,32768,0,0)+data,reverse=reverse))
 def udp(data,sport=53000,dport=53):return struct.pack('!HHHH',sport,dport,len(data)+8,0)+data
 
+def dns_name(value):
+    return b''.join(bytes([len(part)])+part.encode('ascii') for part in value.split('.'))+b'\x00'
+
+def tls_extension(kind,data):return struct.pack('!HH',kind,len(data))+data
+
+def tls_hello(extensions,server=False,cipher=0x1301):
+    body=b'\x03\x03'+bytes(32)+b'\x00'
+    body+=struct.pack('!H',cipher)+b'\x00' if server else b'\x00\x02'+struct.pack('!H',cipher)+b'\x01\x00'
+    body+=struct.pack('!H',len(extensions))+extensions
+    handshake=bytes([2 if server else 1])+len(body).to_bytes(3,'big')+body
+    return b'\x16\x03\x03'+struct.pack('!H',len(handshake))+handshake
+
+
 def build():
     rows=[];t=1795089600.0
     def add(raw,delta=.008):
@@ -43,10 +56,23 @@ def build():
     # A second HTTP connection intentionally contains a capture gap.
     add(tcp(seq=2000,flags=2,sport=51433));add(tcp(b'GET /missing HTTP/1.1\r\n',2001,sport=51433));add(tcp(b'Host: capture-gap.test\r\n\r\n',2060,sport=51433))
     # A complete TLS ClientHello with SNI, emitted on 8443.
-    name=b'www.ucas.ac.cn';sni=struct.pack('!H',len(name)+3)+b'\x00'+struct.pack('!H',len(name))+name;ext=struct.pack('!HH',0,len(sni))+sni
-    hello=b'\x03\x03'+bytes(32)+b'\x00\x00\x02\x13\x01\x01\x00'+struct.pack('!H',len(ext))+ext
-    handshake=b'\x01'+len(hello).to_bytes(3,'big')+hello
-    add(tcp(seq=3000,flags=2,port=8443,sport=51434));add(tcp(b'\x16\x03\x01'+struct.pack('!H',len(handshake))+handshake,3001,port=8443,sport=51434))
+    name=b'www.ucas.ac.cn';sni=struct.pack('!H',len(name)+3)+b'\x00'+struct.pack('!H',len(name))+name
+    offered=tls_extension(0,sni)+tls_extension(43,b'\x04\x03\x04\x03\x03')+tls_extension(16,b'\x00\x0c\x02h2\x08http/1.1')
+    add(tcp(seq=3000,flags=2,port=8443,sport=51434))
+    add(tcp(tls_hello(offered),3001,port=8443,sport=51434))
+    # Append to preserve the original first two flow IDs used by the walkthrough.
+    alias=dns_name('edge.ucas.edu.cn')
+    cname=b'\xc0\x0c'+struct.pack('!HHIH',5,1,300,len(alias))+alias
+    a=alias+struct.pack('!HHIH',1,1,300,4)+ipaddress.IPv4Address('192.0.2.99').packed
+    aaaa=alias+struct.pack('!HHIH',28,1,300,16)+ipaddress.IPv6Address('2001:db8::99').packed
+    response=struct.pack('!6H',0x7139,0x8180,1,3,0,0)+query[12:]+cname+a+aaaa
+    add(frame(ip(udp(response,53,53000),17,reverse=True)))
+    add(tcp(tls_hello(tls_extension(43,b'\x03\x04'),server=True),9000,port=8443,sport=51434,reverse=True))
+    # Visible TLS 1.2 ALPN selection, independently of the TLS 1.3 example.
+    offered12=tls_extension(0,sni)+tls_extension(43,b'\x02\x03\x03')+tls_extension(16,b'\x00\x09\x08http/1.1')
+    add(tcp(seq=4000,flags=2,port=9443,sport=51435))
+    add(tcp(tls_hello(offered12,cipher=0xc02f),4001,port=9443,sport=51435))
+    add(tcp(tls_hello(tls_extension(16,b'\x00\x09\x08http/1.1'),server=True,cipher=0xc02f),9500,port=9443,sport=51435,reverse=True))
     return rows
 
 def main():

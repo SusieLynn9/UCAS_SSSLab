@@ -48,3 +48,14 @@ class ServerTests(unittest.TestCase):
                 with Pcap.offline(path,capture_filter(expr,8765)) as cap:
                     raws=[raw for t,raw,n in cap]
                 self.assertEqual(raws,[http,dns])
+
+    def test_npa_dns_fields_available_in_packet_api(self):
+        from tests.test_npa import dns_response,rr
+        from tests.fixtures import ethernet,ipv4,udp
+        import socket
+        wire=dns_response([rr(b'\xc0\x0c',1,socket.inet_aton('192.0.2.99'))])
+        raw=ethernet(ipv4(udp(wire,sport=53,dport=53000),17))
+        self.session.ingest(2,raw,len(raw),1)
+        p=json.load(self.request('/api/packet?id=2'))
+        self.assertEqual(p['protocol'],'DNS')
+        self.assertIn('192.0.2.99',p['details'][-1]['fields']['Answer 1'])

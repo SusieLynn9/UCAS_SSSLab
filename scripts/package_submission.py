@@ -4,7 +4,6 @@ import argparse
 import json
 from pathlib import Path
 import re
-import subprocess
 import zipfile
 from urllib.parse import urlparse
 
@@ -33,12 +32,10 @@ def package(name,student_id,repo_url,report,video,output):
         z.write(report,f'{folder}/{prefix}_report{report.suffix.lower()}');z.write(video,f'{folder}/{prefix}_play.mp4')
         source=f'{folder}/{prefix}_src/'
         paths=[ROOT/'run.py',ROOT/'launch.command',ROOT/'verify_live.command',ROOT/'.gitignore']
-        for directory in ('sniffer','scripts','tests','samples','docs'):
+        for directory in ('sniffer','scripts','tests','samples'):
             paths.extend(p for p in (ROOT/directory).rglob('*') if p.is_file() and '__pycache__' not in p.parts and not p.name.endswith(('.pyc','.DS_Store')))
         for p in paths:z.write(p,source+p.relative_to(ROOT).as_posix())
         z.writestr(source+'submission-metadata.json',json.dumps({'name':name,'student_id':student_id,'repository':repo_url,'lab':'1A','note':'报告必须包含仓库链接；此元数据文件不能替代报告。'},ensure_ascii=False,indent=2))
-        log=subprocess.run(['git','log','--date=iso-strict','--format=fuller','--stat'],cwd=ROOT,capture_output=True,text=True)
-        if log.returncode==0:z.writestr(source+'git-history.txt',log.stdout)
     return target
 
 

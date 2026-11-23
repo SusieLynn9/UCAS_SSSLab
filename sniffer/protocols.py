@@ -5,31 +5,9 @@ import socket
 import struct
 
 
-class DecodeError(ValueError):
-    pass
-
-
-def dns_name(data, offset):
-    parts, seen, end = [], set(), None
-    for _ in range(128):
-        if offset >= len(data) or offset in seen:
-            raise DecodeError('DNS name truncated or pointer cycle')
-        seen.add(offset)
-        n = data[offset]
-        if n & 0xc0 == 0xc0:
-            if offset+1 >= len(data):
-                raise DecodeError('DNS pointer truncated')
-            if end is None:
-                end = offset+2
-            offset = ((n & 0x3f) << 8) | data[offset+1]
-        elif n == 0:
-            return '.'.join(parts), end if end is not None else offset+1
-        elif n > 63 or offset+1+n > len(data):
-            raise DecodeError('Invalid DNS label')
-        else:
-            parts.append(data[offset+1:offset+1+n].decode('ascii','replace'))
-            offset += n+1
-    raise DecodeError('DNS name exceeds pointer limit')
+from .errors import DecodeError
+from .dns import dns_name, parse_dns
+from .tls import parse_tls
 
 
 def application(data, transport, sport=0, dport=0):
@@ -43,46 +21,18 @@ def application(data, transport, sport=0, dport=0):
                 if b':' in line:
                     k,v=line.split(b':',1)
                     headers[k.decode('latin1')]=v.strip().decode('latin1')
-            return 'HTTP', first.decode('latin1'), {'Start line':first.decode('latin1'),**headers}
+            return 'HTTP', first.decode('latin1'), {**headers,'Start line':first.decode('latin1'),'Headers complete':b'\r\n\r\n' in data[:65536]}
         if len(data)>=5 and data[0] in (20,21,22,23) and data[1]==3 and data[2]<=4 and int.from_bytes(data[3:5],'big')<=18432:
-            fields={'Record type':data[0],'Legacy version':f'{data[1]}.{data[2]}','Record length':int.from_bytes(data[3:5],'big')}
-            info={20:'ChangeCipherSpec',21:'Alert',22:'Handshake',23:'Encrypted application data'}[data[0]]
-            # Parse only a complete ClientHello; fragmented handshakes are left to stream view.
-            try:
-                if data[0]==22 and len(data)>=9 and data[5]==1:
-                    size=int.from_bytes(data[6:9],'big')
-                    if len(data)<9+size: return 'TLS', 'ClientHello (incomplete)', fields
-                    h=data[9:9+size]
-                    def take(pos,n):
-                        if pos+n>len(h): raise DecodeError('TLS ClientHello truncated')
-                        return h[pos:pos+n]
-                    pos=34; pos+=1+take(pos,1)[0]
-                    pos+=2+int.from_bytes(take(pos,2),'big')
-                    pos+=1+take(pos,1)[0]
-                    total=int.from_bytes(take(pos,2),'big'); pos+=2; stop=pos+total
-                    if stop>len(h): raise DecodeError('TLS extensions truncated')
-                    while pos+4<=stop:
-                        kind,n=struct.unpack('!HH',take(pos,4)); pos+=4
-                        ext=take(pos,n); pos+=n
-                        if kind==0 and len(ext)>=5:
-                            namelen=int.from_bytes(ext[3:5],'big')
-                            if ext[2]==0 and len(ext)>=5+namelen:
-                                fields['SNI']=ext[5:5+namelen].decode('ascii','replace'); info='ClientHello · '+fields['SNI']
-            except (IndexError,DecodeError):
-                fields['Note']='Malformed or incomplete ClientHello'
+            info,fields=parse_tls(data)
             return 'TLS',info,fields
-    dns = data
+    dns=data
     if transport=='TCP' and len(data)>=2:
-        n=int.from_bytes(data[:2],'big'); dns=data[2:2+n] if n<=len(data)-2 else b''
+        n=int.from_bytes(data[:2],'big');dns=data[2:2+n] if n<=len(data)-2 else b''
     if (sport in (53,5353) or dport in (53,5353)) and len(dns)>=12:
-        ident,flags,qd,an,ns,ar=struct.unpack('!6H',dns[:12])
-        if qd<=128 and (qd or an) and (flags>>11)&15 in (0,1,2,4,5):
-            fields={'Transaction ID':hex(ident),'Response':bool(flags&0x8000),'Questions':qd,'Answers':an,'RCode':flags&15}
-            if qd:
-                name,pos=dns_name(dns,12)
-                if pos+4>len(dns): raise DecodeError('DNS question truncated')
-                fields['Name']=name; fields['Type']=int.from_bytes(dns[pos:pos+2],'big')
-            return 'DNS',('Response' if flags&0x8000 else 'Query')+' '+fields.get('Name',''),fields
+        flags=int.from_bytes(dns[2:4],'big')
+        if ((flags>>11)&15) in (0,1,2,4,5):
+            info,fields=parse_dns(dns,mdns=sport==5353 or dport==5353)
+            return 'DNS',info,fields
     return '', '', {}
 
 

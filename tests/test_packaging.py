@@ -24,3 +24,5 @@ class PackagingTests(unittest.TestCase):
                 self.assertIn(base+'测试同学_20260001_ex1A_report.pdf',names)
                 self.assertIn(base+'测试同学_20260001_ex1A_src/sniffer/pcap.py',names)
                 self.assertNotIn(base+'测试同学_20260001_ex1A_src/实验 1 讲解 2026.pdf',names)
+                self.assertFalse(any('/docs/' in n for n in names))
+                self.assertFalse(any(n.endswith('git-history.txt') for n in names))

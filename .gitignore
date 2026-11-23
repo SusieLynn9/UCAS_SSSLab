@@ -10,3 +10,6 @@ output/
 !samples/*.pcap
 # Local course handout; keep it out of the future public source repository.
 /实验 1 讲解 2026.pdf
+
+# Local notes and working documents
+/docs/
