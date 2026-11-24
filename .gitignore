@@ -3,7 +3,10 @@ __pycache__/
 *.py[cod]
 .venv/
 tmp/
-output/
+/output/*
+!/output/pdf/
+/output/pdf/*
+!/output/pdf/刘爽_202628013229057_ex1B_report.pdf
 .superpowers/
 *.pcap
 *.pcapng
