@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Package Lab 1B without runtime keys, user data, local notes or Git internals."""
-import argparse,json,re,zipfile
+import argparse,re,zipfile
 from pathlib import Path
 from urllib.parse import urlparse
 ROOT=Path(__file__).resolve().parents[1]
@@ -20,14 +20,13 @@ def package(name,student_id,repo_url,report,video,output):
             if f.read(5)!=b'%PDF-':raise ValueError('Invalid PDF header')
     folder=f'{name}_{student_id}_EX1B';prefix=f'{name}_{student_id}_ex1B';output.mkdir(parents=True,exist_ok=True);target=output/(folder+'.zip')
     if target.exists():raise FileExistsError('Refusing to overwrite '+str(target))
-    roots=['run_server.py','run_client.py','client_cli.py','setup_demo.command','launch_server.command','launch_server_sandboxed.command','launch_client.command','.gitignore','requirements-report.txt']
+    roots=['run_server.py','run_client.py','client_cli.py','setup_demo.command','launch_server.command','launch_server_sandboxed.command','launch_client.command','README.md','requirements-report.txt']
     files=[ROOT/n for n in roots if (ROOT/n).is_file()]
     for directory in ('harbor','scripts','tests','evidence'):
         files.extend(p for p in (ROOT/directory).rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ('.pyc','.pem','.key','.p12') and p.name!='.DS_Store')
     with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED) as z:
         z.write(report,f'{folder}/{prefix}_report{report.suffix.lower()}');z.write(video,f'{folder}/{prefix}_play.mp4')
         for path in files:z.write(path,f'{folder}/{prefix}_src/'+path.relative_to(ROOT).as_posix())
-        z.writestr(f'{folder}/{prefix}_src/submission.json',json.dumps({'name':name,'student_id':student_id,'repository':repo_url,'lab':'1B','setup':'Run setup_demo.command to generate your own local certificates; no private keys are included.'},ensure_ascii=False,indent=2))
     return target
 
 def main():

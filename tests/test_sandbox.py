@@ -7,6 +7,30 @@ from harbor.client import Client
 
 @unittest.skipUnless(sys.platform=='darwin' and shutil.which('sandbox-exec'),'macOS sandbox-exec required')
 class SandboxTests(unittest.TestCase):
+    def test_launcher_uses_custom_config_for_sandbox_and_server(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);paths=initialize(root/'custom runtime');config=Path(paths['server_config'])
+            project=Path(__file__).resolve().parents[1]
+            for options in (['--config',str(config)],['--config='+str(config)]):
+                with self.subTest(options=options):
+                    proc=subprocess.Popen([str(project/'launch_server.command'),*options,'--port','0'],cwd=project,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=0)
+                    client=None
+                    try:
+                        port=None
+                        for _ in range(3):
+                            self.assertTrue(select.select([proc.stdout],[],[],8)[0],'Launcher did not start')
+                            line=proc.stdout.readline().decode()
+                            if not line:self.fail('Launcher exited: '+proc.stderr.read().decode())
+                            if 'listening at' in line:port=int(line.rsplit(':',1)[1]);break
+                        self.assertIsNotNone(port)
+                        cfg=load(paths['alice_config']);cfg['port']=port
+                        clientconfig=root/'client.json';clientconfig.write_text(json.dumps(cfg));client=Client(clientconfig)
+                        self.assertEqual(client.connect()['username'],'alice');self.assertIn('connection_id',client.ping())
+                    finally:
+                        if client:client.close()
+                        if proc.poll() is None:proc.terminate()
+                        proc.wait(timeout=8);proc.stdout.close();proc.stderr.close()
+
     def test_real_server_transfer_and_outside_access_denial(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);paths=initialize(root/'runtime');config=Path(paths['server_config']);sb=root/'server.sb';sb.write_text(profile(config));outside=root/'outside.txt';outside.write_bytes(b'outside marker')

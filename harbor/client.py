@@ -141,18 +141,37 @@ class Client:
         self._request(Opcode.CANCEL,{'direction':'upload','transfer_id':ticket['transfer_id'],'discard':True})
         self.upload_ticket=None
         return {'status':'cancelled','bytes':0,'total':ticket.get('size',0)}
-    def cancel_download(self,local_path):
+    def cancel_download(self,local_path,remote_name=None):
         target=Path(local_path).absolute();target=target.parent.resolve(strict=True)/target.name
         part=target.with_name(target.name+'.part');manifest=target.with_name(target.name+'.part.json')
         try:
-            if os.path.lexists(part):
-                fd=_regular(part,os.O_RDONLY);os.close(fd)
-            if os.path.lexists(manifest):
-                fd=_regular(manifest,os.O_RDONLY);os.close(fd)
-            for path in (part,manifest):
-                try:path.unlink()
-                except FileNotFoundError:pass
-        except OSError as e:raise ClientError('Local cleanup failed: '+str(e)) from e
+            if not os.path.lexists(part) and not os.path.lexists(manifest):
+                return {'status':'cancelled','bytes':0,'total':0}
+            if not os.path.lexists(manifest):raise ClientError('Refusing to remove an unowned partial file','CONFLICT')
+            mfd=_regular(manifest,os.O_RDONLY)
+            with os.fdopen(mfd,'r',encoding='utf-8') as stream:
+                original_manifest=os.fstat(stream.fileno())
+                if original_manifest.st_size>4096:raise ClientError('Invalid cleanup manifest','CONFLICT')
+                saved=json.load(stream)
+                if (not isinstance(saved,dict) or saved.get('format')!='harbor-download-v1'
+                        or saved.get('target')!=target.name or not isinstance(saved.get('part_identity'),list)
+                        or len(saved['part_identity'])!=2
+                        or (remote_name is not None and saved.get('name')!=remote_name)):
+                    raise ClientError('Refusing to remove files without matching download ownership','CONFLICT')
+                if os.path.lexists(part):
+                    fd=_regular(part,os.O_RDONLY)
+                    try:
+                        actual=os.fstat(fd);named=os.stat(part,follow_symlinks=False)
+                        if ([actual.st_dev,actual.st_ino]!=saved['part_identity']
+                                or (named.st_dev,named.st_ino)!=(actual.st_dev,actual.st_ino)):
+                            raise ClientError('Partial file was replaced; preserving local files','CONFLICT')
+                        part.unlink()
+                    finally:os.close(fd)
+                current=os.stat(manifest,follow_symlinks=False)
+                if (current.st_dev,current.st_ino)!=(original_manifest.st_dev,original_manifest.st_ino):
+                    raise ClientError('Resume manifest was replaced; preserving it','CONFLICT')
+                manifest.unlink()
+        except (OSError,ValueError) as e:raise ClientError('Local cleanup failed: '+str(e)) from e
         return {'status':'cancelled','bytes':0,'total':0}
     def _recover_download_publication(self,target,part,manifest,name):
         if not os.path.lexists(part) or not os.path.lexists(manifest):return None
@@ -172,7 +191,7 @@ class Client:
             return {'status':'complete','bytes':st.st_size,'total':st.st_size,'resumed_from':st.st_size,'sha256':saved['sha256'],'name':name}
         finally:os.close(fd)
     def download(self,remote_name,local_path,progress=None,pause_event=None,cancel_event=None):
-        if cancel_event and cancel_event.is_set():return self.cancel_download(local_path)
+        if cancel_event and cancel_event.is_set():return self.cancel_download(local_path,remote_name=remote_name)
         fd=None;handle=None;part=None;manifest=None;fresh_identity=None;manifest_ready=False
         try:
             name=filename(remote_name);target=Path(local_path).absolute();parent=target.parent.resolve(strict=True);target=parent/target.name
@@ -195,14 +214,15 @@ class Client:
             response=self._request(Opcode.DOWNLOAD_INFO,{'name':name,'offset':offset});handle=response['download_id'];size=response['size'];sha256=response['sha256'];resumed=offset
             if saved and (saved.get('sha256')!=sha256 or saved.get('size')!=size):raise ClientError('Remote version changed; cancel local partial and restart','CONFLICT')
             if _hash(fd,offset)!=response['prefix_sha256']:raise ClientError('Download resume prefix mismatch','INTEGRITY')
-            _state_write(manifest,{'name':name,'size':size,'sha256':sha256});manifest_ready=True
+            _state_write(manifest,{'name':name,'size':size,'sha256':sha256,'format':'harbor-download-v1',
+                                   'target':target.name,'part_identity':[initial_part.st_dev,initial_part.st_ino]});manifest_ready=True
             if progress:progress(offset,size)
             while True:
                 intent=self._intent(pause_event,cancel_event)
                 if intent:
                     self._request(Opcode.CANCEL,{'direction':'download','download_id':handle});handle=None
                     os.close(fd);fd=None
-                    if intent=='cancelled':part.unlink();manifest.unlink()
+                    if intent=='cancelled':self.cancel_download(target,remote_name=name)
                     return {'status':intent,'bytes':offset,'total':size,'resumed_from':resumed}
                 if offset==size:break
                 meta,data=self._request(Opcode.DOWNLOAD_CHUNK,{'download_id':handle,'offset':offset,'length':min(self._block_size(),size-offset)},binary=True)

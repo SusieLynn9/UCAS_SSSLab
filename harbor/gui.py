@@ -298,7 +298,7 @@ class TransferPool:
                                cancel_event=job.cancel_event)
                 if job.cancel_event.is_set():
                     if job.direction == 'download' and job.started:
-                        result = client.cancel_download(job.target)
+                        result = client.cancel_download(job.target, remote_name=job.source)
                     elif job.direction == 'upload' and job.upload_ticket is not None:
                         result = client.cancel_upload(job.upload_ticket)
                     elif job.direction == 'upload' or not job.started:

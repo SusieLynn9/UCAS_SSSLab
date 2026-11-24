@@ -1,13 +1,13 @@
 {
   "passed": true,
-  "tests": 56,
+  "tests": 61,
   "failures": 0,
   "errors": 0,
   "skipped": 0,
-  "seconds": 8.89612095800112,
+  "seconds": 10.264693916018587,
   "python": "3.15.2",
   "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
   "ssl": "OpenSSL 4.1.0 23 Oct 2026",
-  "timestamp": "2026-11-24 10:53:54 +0800",
+  "timestamp": "2026-11-24 19:42:35 +0800",
   "scope": "Real loopback mTLS, file transfer/resume/concurrency, permissions, frame validation, private certificate generation and headless GUI worker coordination; no GUI visual acceptance claim"
 }

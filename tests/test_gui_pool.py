@@ -75,7 +75,7 @@ class LocalTransport:
             raise ClientError('interrupted download')
         return {'status': 'paused', 'bytes': 7, 'total': 20}
 
-    def cancel_download(self, target):
+    def cancel_download(self, target, remote_name=None):
         for suffix in ('.part', '.part.json'):
             Path(str(target) + suffix).unlink(missing_ok=True)
         self.calls.append(('cancel_download', str(target)))
@@ -252,6 +252,20 @@ class GuiPoolTests(unittest.TestCase):
         self.assertTrue(warnings)
         self.assertEqual(confirmations, [])
         self.assertEqual(existing.read_bytes(), b'keep existing data')
+
+    def test_real_failed_download_cancel_preserves_existing_partial(self):
+        class CollisionClient(Client):
+            def connect(self):return {'can_upload': True, 'can_download': False}
+            def ping(self):return {}
+
+        config=self.folder/'client.json';config.write_text('{}')
+        target=self.folder/'report';part=Path(str(target)+'.part');part.write_bytes(b'personal data')
+        with patch.object(gui,'Client',CollisionClient):
+            pool=gui.TransferPool(config,workers=1);self.pools.append(pool);pool.start()
+            job=pool.submit('download','report',target);self.wait_state(pool,job,'error')
+            pool.cancel(job)
+            self.wait(lambda: pool.snapshot(job)['state']!='cancelling')
+            self.assertEqual(part.read_bytes(),b'personal data')
 
     def test_upload_only_account_connects_without_listing(self):
         LocalTransport.can_download = False

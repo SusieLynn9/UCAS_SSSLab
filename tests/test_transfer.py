@@ -91,6 +91,19 @@ class TransferTests(unittest.TestCase):
         result=c.cancel_download(target)
         self.assertEqual(result['status'],'cancelled');self.assertFalse(Path(str(target)+'.part').exists());self.assertFalse(Path(str(target)+'.part.json').exists())
 
+    def test_cancel_preserves_other_download_or_replaced_partial(self):
+        c=self.client();source=self.work/'owned-download';source.write_bytes(b'x'*150000);c.upload(source)
+        target=self.work/'partial-target';pause=threading.Event()
+        def progress(done,total):
+            if done:pause.set()
+        c.download(source.name,target,progress=progress,pause_event=pause)
+        part=Path(str(target)+'.part');manifest=Path(str(target)+'.part.json');original=part.read_bytes()
+        with self.assertRaises(ClientError):c.cancel_download(target,remote_name='another-file')
+        self.assertEqual(part.read_bytes(),original);self.assertTrue(manifest.exists())
+        replacement=self.work/'personal';replacement.write_bytes(b'keep personal data');os.replace(replacement,part)
+        with self.assertRaises(ClientError):c.cancel_download(target,remote_name=source.name)
+        self.assertEqual(part.read_bytes(),b'keep personal data');self.assertTrue(manifest.exists())
+
     def test_download_publication_rejects_replaced_partial_path(self):
         c=self.client();p=self.work/'verified';p.write_bytes(b'verified bytes');c.upload(p);target=self.work/'out';replaced=False
         def change_path(done,total):
@@ -171,6 +184,23 @@ class TransferTests(unittest.TestCase):
         p=self.work/'small-rate';p.write_bytes(b'x'*2048);steps=[]
         c.upload(p,progress=lambda done,total:steps.append(done))
         self.assertLessEqual(max(b-a for a,b in zip(steps,steps[1:])),256)
+
+
+class DownloadCleanupTests(unittest.TestCase):
+    def test_cancel_preserves_untrusted_partial_after_download_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target=Path(temp)/'report';part=Path(str(target)+'.part');part.write_bytes(b'personal data')
+            client=Client.__new__(Client)
+            with self.assertRaises(ClientError):client.download('report',target)
+            with self.assertRaises(ClientError):client.cancel_download(target)
+            self.assertEqual(part.read_bytes(),b'personal data')
+
+    def test_cancel_preserves_untrusted_manifest_and_partial(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target=Path(temp)/'report';part=Path(str(target)+'.part');manifest=Path(str(target)+'.part.json')
+            part.write_bytes(b'personal data');manifest.write_text('{}')
+            with self.assertRaises(ClientError):Client.__new__(Client).cancel_download(target)
+            self.assertEqual(part.read_bytes(),b'personal data');self.assertEqual(manifest.read_text(),'{}')
 
 
 class LimitTests(unittest.TestCase):

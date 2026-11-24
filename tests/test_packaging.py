@@ -10,6 +10,8 @@ class PackagingTests(unittest.TestCase):
             with zipfile.ZipFile(path) as z:
                 names=z.namelist();base='测试同学_20260001_EX1B/测试同学_20260001_ex1B'
                 self.assertIn(base+'_report.pdf',names);self.assertIn(base+'_play.mp4',names);self.assertIn(base+'_src/harbor/server.py',names)
+                self.assertIn(base+'_src/README.md',names)
+                self.assertFalse(any(Path(n).name in ('.gitignore','.gitattributes','submission.json') for n in names))
                 self.assertFalse(any('/runtime/' in n or '/docs/' in n or n.endswith(('.key','.pem')) for n in names))
     def test_missing_video_and_path_traversal_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

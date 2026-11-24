@@ -203,12 +203,12 @@ def build(output):
     ], [126, CW-126])
     r.h('结果与验收边界')
     if verification:
-        r.p('自动验证记录：%s项测试，失败%s项、错误%s项、跳过%s项，结论%s。运行环境：Python %s，%s。此数字随证据文件重新生成，不替代原始测试日志。' % (
+        r.p('自动验证记录：%s项测试，失败%s项、错误%s项、跳过%s项，结论%s。运行环境：Python %s，%s。' % (
             verification.get('tests', '?'), verification.get('failures', '?'), verification.get('errors', '?'), verification.get('skipped', '?'),
             '通过' if verification.get('passed') else '未通过', verification.get('python', '?'), verification.get('platform', '?')), size=9, leading=14)
     else:
         r.p('尚无自动验证记录，应先运行 scripts/selftest.py；本报告不将缺失证据视为通过。')
-    r.p('证据覆盖真实回环mTLS、传输/续传、权限和无界面工作池。原生Tk界面曾出现灰白空窗，已定位旧Apple Tk兼容问题；新版Python 3.15.2/Tk 9.1运行环境检查通过，56项自动测试通过；窗口仍需用户实机重试及视觉验收。本文不声明GUI完整视觉验收或视频已经完成。', size=9, leading=14)
+    r.p('自动测试覆盖真实回环mTLS、传输与续传、权限隔离和工作池。使用Python 3.15.2与Tk 9.1运行客户端，窗口显示及alice身份连接已验证。尚未录制1B演示视频。', size=9, leading=14)
     r.p('代码仓库：https://github.com/SusieLynn9/UCAS_SSSLab\n分支：lab-1b-secure-file-transfer-software-design-and-implementation', size=8, leading=13)
 
     r.new('架构 / 02', '系统结构与持续会话', '线程职责清晰，连接随用户会话持续复用')
@@ -293,7 +293,7 @@ def build(output):
         (0,1,'INFO(name, 本地.part长度)'),(1,0,'size, sha256, prefix_sha256, handle'),(0,1,'验证清单/前缀后请求剩余CHUNK'),
         (0,1,'暂停：CANCEL(download, handle)'),(1,0,'关闭远端句柄；本地保留断点'),(0,1,'取消：CANCEL + 本地清理.part/.json')],height=226)
     r.h('控制语义与异常边界')
-    r.p('暂停在块边界生效：上传保留服务端事务及upload_ticket，下载保留本地.part与清单；继续/重试重新执行BEGIN或INFO。断线由finally释放活动所有权，未完成上传仍可恢复；新下载在取得INFO前失败不会留下阻塞重试的无清单临时文件。已暂停上传的“取消并清理”通过Client.cancel_upload(ticket)重新请求discard=true；暂停下载由cancel_download清理本地断点。',size=9,leading=14)
+    r.p('暂停在块边界生效：上传保留服务端事务及upload_ticket，下载保留本地.part与清单；继续/重试重新执行BEGIN或INFO。断线由finally释放活动所有权，未完成上传仍可恢复；新下载在取得INFO前失败不会留下阻塞重试的无清单临时文件。已暂停上传的“取消并清理”通过Client.cancel_upload(ticket)重新请求discard=true；暂停下载由cancel_download核对清单归属、目标文件名及设备/inode后清理本地断点；无可信清单或文件已被替换时保留原文件。',size=9,leading=14)
     r.p('取消上传discard=true删除服务端.part与清单。正在另一连接运行的事务不能被抢占删除。下载续传要求远端size/hash与保存清单相同，且已有前缀hash一致；任一不符都报错，防止把不同版本拼接。过期且非活动上传事务在后续BEGIN时按TTL回收。',size=9,leading=14)
 
     r.new('下载 / 07', '下载完整性与 GUI 交互', '多任务并行由工作池承载，Tk主线程保持可响应')
@@ -309,7 +309,7 @@ def build(output):
         ('并发与反馈', '默认4个持久工作连接；同一池混合上传/下载，后台事件通过队列进入after更新')
     ],[100,CW-100],size=9,leading=14)
     r.h('界面验收状态')
-    r.note('此页为源码交互说明，不放置模拟截图。无界面工作池和真实TLS集成测试已执行；原生Tk界面出现灰白空窗后，定位到系统Python3.9绑定Apple Tk8.5.9。GUI须使用Tk≥8.6的解释器（推荐Homebrew python-tk@3.15或当前python.org安装包）。修正后的完整视觉及实际按钮验收仍待用户在Mac上重试与录屏。')
+    r.note('GUI使用Tk≥8.6的解释器；本机Python 3.15.2与Tk 9.1已确认窗口显示正常，能够连接alice。多任务、暂停、继续和取消由工作池回归测试覆盖；尚未完成全部按钮的逐项人工验收和1B录屏。')
 
     r.new('安全 / 08', '分层防护与明确的信任边界', '通道、身份、目录和进程权限分别约束不同攻击面')
     r.table(['威胁', '实现措施', '保证范围 / 局限'],[
@@ -325,7 +325,7 @@ def build(output):
     r.p('Mac默认launch_server.command调用sandbox-exec；scripts/sandbox_profile.py生成deny-default策略：仅允许服务源码/解释器/系统必需目录和配置指定的证书读入，数据写入仅限配置root（另有/dev/null与终端设备例外），并开放必要网络/进程能力。读取证书是运行必需；CA私钥、客户端私钥不在服务证书读入白名单。',size=9,leading=14)
     r.note('验证包含：独立探针的目录外读写被拒，以及tests/test_sandbox.py中真实沙箱服务的TLS上传/下载成功、生成的目录外测试文件读写被拒。此策略为本机Mac环境实现，允许必要系统只读访问，并非跨平台沙箱或任意进程行为全隔离证明；其他系统应配置独立低权限服务账号及等效OS隔离。')
 
-    r.new('证据 / 09', '自动验证与按身份限速实测', '结果从 output/*.json 读取；证据日期与范围保留在本页')
+    r.new('测试 / 09', '自动验证与按身份限速实测', '结果从 output/*.json 读取；证据日期与范围保留在本页')
     if verification:
         r.p('验证时间：%s。测试%s项 / 失败%s / 错误%s / 跳过%s；耗时%.2f秒。解释器Python %s，TLS库%s。结论：%s。' % (
             verification.get('timestamp','未记录'),verification.get('tests','?'),verification.get('failures','?'),verification.get('errors','?'),verification.get('skipped','?'),
@@ -363,7 +363,7 @@ def build(output):
 
     r.new('复现 / 10', '运行、验收与提交说明', '源代码可复查，报告可重建，视频须展示真实运行过程')
     r.h('在本实验工作目录启动')
-    r.p('本机目录：/Users/ls/UCAS_Courses/SSS/.worktrees/lab1b。先执行./setup_demo.command生成私有本地CA、服务端和alice/bob证书及随机演示文件；重复执行不会覆盖现有runtime。终端一执行./launch_server.command；终端二执行./launch_client.command，默认加载runtime/alice.json。另一客户端可用--config runtime/bob.json。',size=9,leading=14)
+    r.p('在项目根目录先执行./setup_demo.command生成私有本地CA、服务端和alice/bob证书及随机演示文件；重复执行不会覆盖现有runtime。终端一执行./launch_server.command；终端二执行./launch_client.command，默认加载runtime/alice.json。另一客户端可用--config runtime/bob.json。',size=9,leading=14)
     r.p('服务端使用系统Python3.9及标准库，Mac默认进入进程沙箱。GUI解释器需Tk≥8.6，推荐安装brew install python-tk@3.15后由启动器选择，或使用当前python.org安装包。Python源码无需C/C++编译，录屏应展示py_compile、初始化、部署和测试全过程。',size=9,leading=14)
     r.h('验证与报告重建')
     for command in [
@@ -374,7 +374,7 @@ def build(output):
         'python3 -m pip install reportlab',
         'python3 scripts/build_report.py']:
         r.p(command,size=8,leading=12,gap=5)
-    r.p('报告生成器仅额外依赖ReportLab，默认输出output/pdf/刘爽_202628013229057_ex1B_report.pdf；缺失证据明确显示未验证。Python3.9兼容源码与本机Tk运行时的兼容性分别检查。GUI的最终视觉验收、真实录屏及其时长由实机操作确认。',size=8.5,leading=13)
+    r.p('报告生成器仅额外依赖ReportLab，默认输出output/pdf/刘爽_202628013229057_ex1B_report.pdf；缺失证据明确显示未验证。Python3.9兼容源码与本机Tk运行时的兼容性分别检查。窗口启动与alice连接已验证，完整按钮操作和真实录屏尚未完成。',size=8.5,leading=13)
     r.table(['第40页加分项', '实现落点 / 验收动作'],[
         ('文件断点续传', '上传/下载均校验前缀；暂停、继续，观察resumed_from和最终摘要'),
         ('公钥身份认证', 'mTLS与指纹映射；合法证书成功，错误CA/主机名/未授权身份拒绝'),
@@ -385,7 +385,7 @@ def build(output):
     r.p('参考与依据：[1]《实验1讲解2026.pdf》第31-48页（课程要求、长连接、协议图、ACL、四项加分）。[2] 本仓库harbor/与scripts/、tests/（实现与可执行验证）。[3] output/verification.json、benchmark.json、sandbox-verification.json（本次生成读取的实际证据）。',size=8,leading=12)
     r.finish()
     return {'output': str(output), 'pages': 10, 'tests': verification.get('tests'),
-            'passed': verification.get('passed'), 'gui_visual_acceptance': 'pending user retest'}
+            'passed': verification.get('passed'), 'gui_visual_acceptance': 'window and alice connection confirmed; full button acceptance pending'}
 
 
 def main():
