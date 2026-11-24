@@ -73,7 +73,7 @@ def build(name,student_id,repo_url,output):
     p('依据课程《实验 1 讲解 2026.pdf》内容，本项目完成 1A。以下是具体要求与相应完成情况。')
     story.append(table([['课程要求','完成情况'],['NPS 必须实现（第 9 页）','通过 ctypes 调用系统 libpcap；运行 verify_live.command，捕获 lo0 接口上的 HTTP 请求与响应。'],['带 GUI（第 5、15 页）','使用本地浏览器界面，展示报文列表、协议字段和 HEX/ASCII 原始字节；另外提供流、进程和统计页面。'],['协议过滤（第 14 页）','BPF 捕获过滤；HTTP/TCP/UDP/IPv4/v6/ICMP 等显示过滤，and/or/not/括号。'],['尽量完善 NPA（第 9 页）','自主解析 Ethernet/VLAN/ARP/IP/TCP/UDP/ICMP；HTTP/1 头部完整性、DNS 常见响应记录、TLS Hello 的 SNI/版本/ALPN 元数据解析。'],['TCP / 进程流追踪（加分）','双向四元组、TCP 重组与时序、lsof 快照关联；缺口、冲突和置信度可见。']],[137,362]))
     h('报文捕获与分层解析')
-    p('我通过 BPF/libpcap 从所选网络接口读取原始报文。lo0 报文带有 Loopback 头，以太网报文带有 Ethernet 头。程序先识别这些封装，再解析网络层的 IPv4/IPv6；对 TCP、UDP 等载荷继续读取端口和数据，最后识别 HTTP、DNS、TLS 等应用协议。ICMP 则作为网络层控制协议单独解析。这一过程将原始字节转换为界面中可查看的协议字段。')
+    p('通过 BPF/libpcap 从所选网络接口读取原始报文。lo0 报文带有 Loopback 头，以太网报文带有 Ethernet 头。程序先识别这些封装，再解析网络层的 IPv4/IPv6；对 TCP、UDP 等载荷继续读取端口和数据，最后识别 HTTP、DNS、TLS 等应用协议。ICMP 则作为网络层控制协议单独解析。这一过程将原始字节转换为界面中可查看的协议字段。')
     h('Thor 思考题')
     p('安装根证书后，HTTP 代理可在受信任 TLS 终止点获取解密后的 HTTP 内容；这属于特定应用层路径的观察。代理拿到的并非原始端到端 TCP 分段、重传、拥塞或所有传输协议状态，因此不能据此分析完整传输层行为。证书改变信任与可解密性，不能改变观察点和工具的层次边界。证书固定、非代理协议等也可能限制观察。')
 
@@ -84,7 +84,7 @@ def build(name,student_id,repo_url,output):
     h('捕获过滤与显示过滤')
     story.append(table([['比较','BPF 捕获过滤','显示过滤'],['执行位置','libpcap / OS 捕获路径','用户空间，针对已解析字段'],['生效时间','启动捕获时','分析过程中随时修改'],['例子','tcp port 8080 or icmp','tcp and (http or tls)'],['作用','减少进入用户空间的数据量','筛选保留窗口，不能恢复未捕获数据'],['实现','pcap_compile + pcap_setfilter','递归下降语法解析；禁止 eval']],[80,205,214]))
     h('回环接口抓包测试')
-    p('我在 Mac 终端运行 ./verify_live.command，测试脚本启动本地 HTTP 服务，并在 lo0 接口上捕获对应端口的流量。本次测试使用 BPF 表达式 tcp port 50860，共捕获 12 个报文，识别出 1 个 HTTP 请求和 1 个 HTTP 响应，dropped 与 interface_dropped 均为 0。测试结果保存在 samples/live-verification.json。')
+    p('在 Mac 终端运行 ./verify_live.command，测试脚本启动本地 HTTP 服务，并在 lo0 接口上捕获对应端口的流量。本次测试使用 BPF 表达式 tcp port 50860，共捕获 12 个报文，识别出 1 个 HTTP 请求和 1 个 HTTP 响应，dropped 与 interface_dropped 均为 0。测试结果保存在 samples/live-verification.json。')
 
     page('03 / PROTOCOL ANALYSIS','用报文结构识别协议')
     story.append(table([['层次 / 协议','解析与边界处理'],['链路层','Ethernet、最多 8 层 VLAN；Loopback/NULL、Raw IP、Linux SLL/SLL2。未知链路类型明确告警。'],['ARP / IPv4','地址、操作码；IP 头长、总长、TTL、分片信息。IP 分片不做重组，避免把碎片误识别为完整 TCP。'],['IPv6','地址、Payload Length、Next Header、Hop Limit；有界遍历常见扩展头。非原子分片跳过传输层分析。'],['TCP / UDP','端口、Seq/Ack、Flags、窗口、TCP Data Offset、UDP Length；在声明报文边界内读取。'],['ICMP / ICMPv6','Type、Code、校验和值与常见 Echo/Unreachable/Neighbor 摘要。只展示校验和，未实现校验验证。'],['HTTP/1','验证请求/响应首行，解析可见头字段，明确标记 Headers complete。即使端口为 8080 也可识别；仅有端口不能证明 HTTP。'],['DNS','解析问题与 Answer/Authority/Additional 区段，支持 A/AAAA/CNAME/NS/PTR/MX/TXT/SOA 与 TTL；支持 mDNS cache-flush。限定问题与记录数，检测名称循环及非法长度。'],['TLS','检查 Record/Hello/扩展边界；ClientHello 展示 SNI、支持版本和 Offered ALPN；ServerHello 展示 Selected version 及可见的 TLS 1.2 Selected ALPN。TLS 1.3 服务端 ALPN 位于加密消息中，不推断其选择；不解密应用数据。']],[98,401]))
@@ -116,13 +116,13 @@ def build(name,student_id,repo_url,output):
     p('浏览器界面的 HTTP 服务监听本机回环地址 127.0.0.1，仅供本机访问；抓包接口可独立选择，不受该监听地址限制。控制 API 校验随机令牌、Host、Origin 和 Sec-Fetch-Site；不开放 CORS。报文中的文本通过 textContent 安全渲染，不作为 HTML 执行；使用 CSP 限制资源。PCAP 上传最多 64 MiB，非法文件导入以临时会话验证后再替换，失败不清空原会话；控制操作版本阻止旧导入覆盖后来的清空或捕获。导出只包含保留窗口中匹配筛选的真实字节。')
 
     page('06 / VALIDATION & DELIVERY','测试结果与运行方法')
-    story.append(table([['测试项','测试结果'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS / Apple Silicon，Python 3.9+；应用无 pip 依赖。'],['真实 NPS','我在 lo0 接口测试本地 HTTP 通信，捕获 12 个报文；请求与响应各 1 个，丢包计数为 0。'],['GUI / 演示视频','我录制了约 10 分 10 秒的操作演示，展示实时抓包、过滤、TCP 流、进程关联、PCAP 操作和合成边界案例。进程页面展示了 listener 回退关联。']],[105,394]))
+    story.append(table([['测试项','测试结果'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS / Apple Silicon，Python 3.9+；应用无 pip 依赖。'],['真实 NPS','在 lo0 接口测试本地 HTTP 通信，捕获 12 个报文；请求与响应各 1 个，丢包计数为 0。'],['GUI / 演示视频','录制了约 10 分 10 秒的操作演示，展示实时抓包、过滤、TCP 流、进程关联、PCAP 操作和合成边界案例。进程页面展示了 listener 回退关联。']],[105,394]))
     h('运行与复现')
     for line in ['./launch.command','./verify_live.command','/usr/bin/python3 -m unittest discover -v','/usr/bin/python3 -m compileall -q run.py sniffer scripts','/usr/bin/python3 scripts/benchmark.py --packets 10000']:
         p(line,'code')
     p('演示步骤：lo0 + BPF tcp port 8080 → 启动本地 HTTP 服务 → curl 请求 → HTTP 字段与原始字节 → TCP 流时序 → 保持连接并刷新进程 → 导出/清空/导入。离线样例单独演示乱序、重传、缺口、IPv6、DNS 和 TLS SNI，与实时抓包分别展示。操作前确认接口与捕获过滤表达式，停止后可导出 PCAP 复核。')
     h('实验总结')
-    p('本实验完成了从接口捕获、分层解析、逻辑过滤到双向 TCP 流分析的处理过程。我通过本地 HTTP 通信测试实时捕获，并使用合成样例检查乱序、重传和缺口处理；同时演示了本机进程关联和 PCAP 导入导出。后续改进方向包括 IP 分片重组、更全面的应用协议支持与高负载捕获性能测试。')
+    p('本实验完成了从接口捕获、分层解析、逻辑过滤到双向 TCP 流分析的处理过程。通过本地 HTTP 通信测试实时捕获，并使用合成样例检查乱序、重传和缺口处理；同时演示了本机进程关联和 PCAP 导入导出。后续改进方向包括 IP 分片重组、更全面的应用协议支持与高负载捕获性能测试。')
     h('参考')
     p('课程《实验 1 讲解 2026.pdf》（刘鹏，2026-11-10）；本机 libpcap API/系统头文件；libpcap 官方仓库 https://github.com/the-tcpdump-group/libpcap；DNS RFC 1035、mDNS RFC 6762、ALPN RFC 7301；TCP RFC 9293、HTTP/1.1 RFC 9112、IPv6 RFC 8200、TLS 1.3 RFC 8446（协议规范参考）。','small')
     video_path=ROOT/'samples/video-verification.json'
@@ -141,7 +141,7 @@ def build(name,student_id,repo_url,output):
         figures=Table(rows,colWidths=[249.5,249.5]);figures.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),10)]));story.append(figures)
         h('演示内容与时间索引')
         story.append(table([['时间段（约）','演示内容'],['00:00–01:00','终端测试与服务准备；后续打开浏览器GUI。'],['01:00–04:00','lo0接口、tcp port 8080、HTTP字段/字节、显示过滤与TCP流时序。'],['04:00–06:40','保持测试连接、进程快照、暂停/继续与PCAP操作；进程页为listener。'],['06:40–09:15','26个合成报文；乱序重传72 B、缺口36 B，以及DNS/ICMP/TLS字段。'],['09:15–10:10','capture.py、protocols.py、flows.py等核心源码展示。']],[105,394]))
-        p('我先演示本地 HTTP 通信的实时捕获，再载入合成样例，分别展示乱序、重传与缺口处理。进程页面中的 listener 表示根据明确的监听地址和端口进行回退匹配，与完整四元组匹配 exact 的含义不同。','small')
+        p('先演示本地 HTTP 通信的实时捕获，再载入合成样例，分别展示乱序、重传与缺口处理。进程页面中的 listener 表示根据明确的监听地址和端口进行回退匹配，与完整四元组匹配 exact 的含义不同。','small')
     out=Path(output);out.parent.mkdir(parents=True,exist_ok=True)
     def decorate(canvas,doc):
         canvas.saveState();canvas.setStrokeColor(LINE);canvas.line(48,43,547,43);canvas.setFont('Helvetica',8);canvas.setFillColor(MUTED);canvas.drawString(48,29,'PRISM / UCAS LAB 1A');canvas.drawRightString(547,29,f'{doc.page} / {8 if video else 7}');canvas.setFont('STSong-Light',8);canvas.drawRightString(547,813,'报告草稿 · 待补身份' if draft else '实验 1A · 嗅探器设计与实现');canvas.restoreState()
