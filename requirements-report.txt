@@ -1,0 +1,2 @@
+# Optional PDF generation dependency; the transfer app uses only Python stdlib.
+reportlab>=4.0

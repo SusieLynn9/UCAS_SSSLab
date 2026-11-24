@@ -1,0 +1,6 @@
+{
+  "inside_write": true,
+  "outside_read_denied": true,
+  "outside_write_denied": true,
+  "passed": true
+}

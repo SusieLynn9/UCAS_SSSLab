@@ -1,0 +1,26 @@
+{
+  "scope": "Loopback mTLS upload measurement, each user gets a separate shared bucket; burst=max(64KiB,rate/4), metadata/TLS overhead excluded; not an Internet/NIC throughput or DDoS claim",
+  "results": [
+    {
+      "user": "alice",
+      "tier": "Standard",
+      "configured_payload_bytes_per_second": 262144,
+      "bytes": 2097152,
+      "seconds": 7.7625234999999995,
+      "observed_bytes_per_second": 270163.69096982444,
+      "sha256": "45f190c246dcf46364aa562f2426cff9b808616f7ade06ad4e993eaa8cd1d079",
+      "status": "complete"
+    },
+    {
+      "user": "bob",
+      "tier": "VIP",
+      "configured_payload_bytes_per_second": 1048576,
+      "bytes": 2097152,
+      "seconds": 1.7621963329999994,
+      "observed_bytes_per_second": 1190078.5177720606,
+      "sha256": "45f190c246dcf46364aa562f2426cff9b808616f7ade06ad4e993eaa8cd1d079",
+      "status": "complete"
+    }
+  ],
+  "timestamp": "2026-11-23 21:46:43 +0800"
+}

@@ -11,3 +11,10 @@ output/
 
 # Local documentation
 /docs/
+/.worktrees/
+/runtime/
+/state/
+/certs/
+/downloads/
+*.part
+*.part.json
