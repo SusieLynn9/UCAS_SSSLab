@@ -1,0 +1,74 @@
+{
+  "source": "录屏2026-11-24 17.39.46.mov",
+  "source_bytes": 565146163,
+  "duration_seconds": 610.35,
+  "resolution": [
+    3024,
+    1964
+  ],
+  "video_codec": "H.264",
+  "audio_codec": "AAC stereo 48 kHz",
+  "review_scope": "Visual keyframe review at 15-second intervals and selected full-resolution frames; audio track presence checked, speech not transcribed",
+  "process_match_observed": "listener",
+  "frames": [
+    {
+      "file": "http.jpg",
+      "seconds": 142,
+      "caption": "HTTP 报文字段与原始字节"
+    },
+    {
+      "file": "process.jpg",
+      "seconds": 262,
+      "caption": "Python PID 79925，listener 回退关联"
+    },
+    {
+      "file": "retransmission.jpg",
+      "seconds": 442,
+      "caption": "乱序响应重组，重传 72 B"
+    },
+    {
+      "file": "gap.jpg",
+      "seconds": 457,
+      "caption": "缺口 [23,59)，36 B，头部不完整"
+    }
+  ],
+  "observed": [
+    "Live lo0 TCP port 8080 capture",
+    "HTTP display filtering and packet fields/bytes",
+    "TCP stream timeline and reassembly",
+    "Process listener association",
+    "PCAP export/import interaction and offline packets",
+    "26 synthetic demo packets",
+    "72 retransmitted bytes and 36-byte capture gap",
+    "DNS, ICMP and TLS fields",
+    "Source code walkthrough"
+  ],
+  "limitations": [
+    "PCAP round-trip packet counts not independently proven equal",
+    "No exact process attribution acceptance claim",
+    "No audio content or transcription acceptance claim"
+  ],
+  "source_sha256": "83c05b4938820ab6af3c566c07d0c8fd80da981955ebdad443f2bbd5773874fa",
+  "subtitles": {
+    "type": "operation captions based on visual review, not speech transcription",
+    "cues": 35,
+    "format": "UTF-8 SRT and burned-in MP4",
+    "original_preserved": true
+  },
+  "delivery": {
+    "file": "刘爽_202628013229057_ex1A_play.mp4",
+    "bytes": 508234676,
+    "subtitle_type": "35 burned-in Chinese operation captions",
+    "audio_bitstream_sha256": "6084d077ddf88e7f7dadb64496ebb71539ce0f520af471664dc2c9190bbfeb24",
+    "audio_preserved": true,
+    "duration_seconds": 610.37,
+    "full_video_audio_decode_passed": true,
+    "subtitle_visual_checks_seconds": [
+      3,
+      270,
+      460,
+      595
+    ],
+    "subtitle_visual_checks_passed": true
+  }
+}

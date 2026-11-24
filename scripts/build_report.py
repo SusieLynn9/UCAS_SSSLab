@@ -12,7 +12,7 @@ try:
     from reportlab.lib.enums import TA_LEFT
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,PageBreak,KeepTogether
+    from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,PageBreak,KeepTogether,Image
     from reportlab.graphics.shapes import Drawing,Rect,String,Line,Polygon
 except ImportError:
     raise SystemExit('报告生成需要 reportlab；程序本身无需此依赖。请在虚拟环境运行 pip install reportlab。')
@@ -65,9 +65,9 @@ def build(name,student_id,repo_url,output):
     page('UCAS / SOFTWARE AND SYSTEM SECURITY / LAB 1A','嗅探器设计与实现')
     story.append(Paragraph('Prism<span color="#0b887e">.</span>',ParagraphStyle('brand',fontName='Helvetica-Bold',fontSize=49,leading=62,textColor=INK,spaceAfter=8)))
     p('Network Packet Sniffer Design and Implementation','small');p('以真实捕获为基础，以协议证据和连接语义为核心。')
-    story.append(Spacer(1,10));story.append(table([['项目信息','内容'],['姓名 / 学号',(name or '待补姓名')+' / '+(student_id or '待补真实学号')],['源码仓库',repo_url or '待创建：software_and_system_security_lab；提交前必须替换为真实 HTTPS URL'],['实验分支','lab-1a-sniffer-design-and-implementation'],['环境','macOS / Apple Silicon；系统 Python 3.9+ / libpcap；本地浏览器 GUI'],['文档状态','待补身份与 GUI 人工验收的草稿' if draft else '实验报告；完整交互演示与最终视频待补充']],[105,394]))
+    story.append(Spacer(1,10));story.append(table([['项目信息','内容'],['姓名 / 学号',(name or '待补姓名')+' / '+(student_id or '待补真实学号')],['源码仓库',repo_url or '待创建：software_and_system_security_lab；提交前必须替换为真实 HTTPS URL'],['实验分支','lab-1a-sniffer-design-and-implementation'],['环境','macOS / Apple Silicon；系统 Python 3.9+ / libpcap；本地浏览器 GUI'],['文档状态','待补身份与 GUI 人工验收的草稿' if draft else '实验报告；已补充真实录屏与画面证据']],[105,394]))
     story.append(Spacer(1,17));h('工作摘要');p('实现网卡选择、真实 libpcap 抓包、BPF 捕获过滤、自主分层解码、逻辑显示过滤、三窗格分析、PCAP 导入导出，以及双向 TCP 流重组、时序图和本机进程快照关联。TLS 仅识别可见握手，不解密 HTTPS。')
-    p(f'验证摘要：{tests["tests"]} 项自动化测试通过；用户本机回环实测 12 个报文、1 个 HTTP 请求、1 个 HTTP 响应，0 丢包。用户已确认 GUI 打开且暂时无错误；完整交互验收与录屏仍需补齐。','small')
+    p(f'验证摘要：{tests["tests"]} 项自动化测试通过；用户本机回环实测 12 个报文、1 个 HTTP 请求、1 个 HTTP 响应，0 丢包。已核对 2026-11-24 真实录屏关键画面，覆盖抓包、过滤、TCP 流、进程 listener 关联、PCAP 操作和合成边界样例。','small')
     h('实现边界');p('该实现以课程实验可解释性和可复现性为目标。性能测量为合成离线 CPU 基准，不能推导真实网卡线速。尚未实现 IP 分片重组、完整 HTTP/2/QUIC、HTTPS 解密或逐包进程来源追踪。')
 
     page('01 / REQUIREMENTS & NETWORK LAYERS','要求映射与抓包层次')
@@ -118,7 +118,7 @@ def build(name,student_id,repo_url,output):
     p('HTTP 只绑定 127.0.0.1，控制 API 校验随机令牌、Host、Origin 和 Sec-Fetch-Site；不开放 CORS。报文中的文本通过 textContent 安全渲染，不作为 HTML 执行；使用 CSP 限制资源。PCAP 上传最多 64 MiB，非法文件导入以临时会话验证后再替换，失败不清空原会话；控制操作版本阻止旧导入覆盖后来的清空或捕获。导出只包含保留窗口中匹配筛选的真实字节。')
 
     page('06 / VALIDATION & DELIVERY','验证、复现与提交')
-    story.append(table([['验证项','状态与证据'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS 自带 Python 3.9.6 与 Homebrew Python 3.15.0；应用无 pip 依赖。'],['真实 NPS','用户本机终端运行：12 个 lo0 报文；1 个 HTTP 请求、1 个响应，丢包 0。原始 JSON 已保存。'],['GUI / 演示视频','用户确认界面已打开且暂时无错误；完整交互验收、截图和实际 MP4 待补。'],['提交状态','本地 Git 分阶段记录已建立；远端已配置为 GitHub 仓库，身份信息已填写；提交前核对远端同步、仓库公开状态和课程网站提交结果。']],[105,394]))
+    story.append(table([['验证项','状态与证据'],['自动化回归',f'{tests["tests"]} 项测试通过：协议边界、逻辑过滤、真实 libpcap 离线/BPF、TCP 重组、lsof 解析、会话限额、API 鉴权及打包结构。'],['运行环境','macOS / Apple Silicon，Python 3.9+；应用无 pip 依赖。'],['真实 NPS','用户本机终端运行：12 个 lo0 报文；1 个 HTTP 请求、1 个响应，丢包 0。原始 JSON 已保存。'],['GUI / 演示视频','已提供 10分10秒真实 MOV 录屏（含音轨），另存 H.264/AAC MP4；关键帧和时间点见下页。进程页观察到 listener，未将其表述为 exact。'],['提交状态','本地 Git 分阶段记录已建立；远端已配置为 GitHub 仓库，身份信息已填写；提交前核对远端同步、仓库公开状态和课程网站提交结果。']],[105,394]))
     h('运行与复现')
     for line in ['./launch.command','./verify_live.command','/usr/bin/python3 -m unittest discover -v','/usr/bin/python3 -m compileall -q run.py sniffer scripts','/usr/bin/python3 scripts/benchmark.py --packets 10000']:
         p(line,'code')
@@ -129,9 +129,28 @@ def build(name,student_id,repo_url,output):
     p('实验实现了从接口捕获、分层解析、逻辑过滤到双向 TCP 流分析的完整处理过程。需要结合真实抓包与合成边界测试验证结果，并区分原始报文事实、快照关联和重组推断。后续改进方向包括 IP 分片重组、更全面的应用协议支持与高负载捕获性能测试。')
     h('参考')
     p('课程《实验 1 讲解 2026.pdf》（刘鹏，2026-11-10）；本机 libpcap API/系统头文件；libpcap 官方仓库 https://github.com/the-tcpdump-group/libpcap；DNS RFC 1035、mDNS RFC 6762、ALPN RFC 7301；TCP RFC 9293、HTTP/1.1 RFC 9112、IPv6 RFC 8200、TLS 1.3 RFC 8446（协议规范参考）。','small')
+    video_path=ROOT/'samples/video-verification.json'
+    video=json.loads(video_path.read_text()) if video_path.is_file() else None
+    if video:
+        page('07 / RECORDED DEMONSTRATION','真实录屏与操作证据')
+        p('原片：'+video['source']+'；时长约10分10秒，3024×1964，H.264视频与AAC音轨。已按15秒间隔抽帧，并核对下列全分辨率关键画面；不以关键帧审查代替音轨逐句转写。','small')
+        p('提交视频：刘爽_202628013229057_ex1A_play.mp4；操作说明字幕直接写入画面，视频重新编码、音轨保留；另存无字幕无损封装版与SRT，原始MOV继续保留。','small')
+        rows=[]
+        for pair in (video['frames'][:2],video['frames'][2:]):
+            cells=[]
+            for item in pair:
+                path=ROOT/'samples/video-evidence'/item['file']
+                img=Image(str(path),width=235,height=235*1440/2310)
+                seconds=item['seconds'];caption='%02d:%02d '%(seconds//60,seconds%60)+item['caption']
+                cells.append([img,para(caption,'small')])
+            rows.append(cells)
+        figures=Table(rows,colWidths=[249.5,249.5]);figures.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),10)]));story.append(figures)
+        h('视频定位与结果解释')
+        story.append(table([['时间段（约）','画面与证据'],['00:00–01:00','终端测试与服务准备；后续打开浏览器GUI。'],['01:00–04:00','lo0接口、tcp port 8080、HTTP字段/字节、显示过滤与TCP流时序。'],['04:00–06:40','保持测试连接、进程快照、暂停/继续与PCAP操作；进程页为listener。'],['06:40–09:15','26个合成报文；乱序重传72 B、缺口36 B，以及DNS/ICMP/TLS字段。'],['09:15–10:10','capture.py、protocols.py、flows.py等核心源码展示。']],[105,394]))
+        p('边界说明：原片中的实时捕获与离线合成演示分开呈现；截图仅裁去桌面和浏览器边框，未修改应用数据。listener为明确监听地址回退，不是完整四元组exact证明；PCAP导出与导入操作可见，但未据抽帧断言前后包数完全一致。','small')
     out=Path(output);out.parent.mkdir(parents=True,exist_ok=True)
     def decorate(canvas,doc):
-        canvas.saveState();canvas.setStrokeColor(LINE);canvas.line(48,43,547,43);canvas.setFont('Helvetica',8);canvas.setFillColor(MUTED);canvas.drawString(48,29,'PRISM / UCAS LAB 1A');canvas.drawRightString(547,29,f'{doc.page} / 7');canvas.setFont('STSong-Light',8);canvas.drawRightString(547,813,'报告草稿 · 待补身份' if draft else '实验 1A · 嗅探器设计与实现');canvas.restoreState()
+        canvas.saveState();canvas.setStrokeColor(LINE);canvas.line(48,43,547,43);canvas.setFont('Helvetica',8);canvas.setFillColor(MUTED);canvas.drawString(48,29,'PRISM / UCAS LAB 1A');canvas.drawRightString(547,29,f'{doc.page} / {8 if video else 7}');canvas.setFont('STSong-Light',8);canvas.drawRightString(547,813,'报告草稿 · 待补身份' if draft else '实验 1A · 嗅探器设计与实现');canvas.restoreState()
     doc=SimpleDocTemplate(str(out),pagesize=A4,rightMargin=48,leftMargin=48,topMargin=48,bottomMargin=57,title='Prism - 嗅探器设计与实现',author=name or '待填写学生姓名')
     doc.build(story,onFirstPage=decorate,onLaterPages=decorate);return out
 
